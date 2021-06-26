@@ -1,11 +1,18 @@
 package com.example.servicesample;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Button;
+
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.io.IOException;
 
@@ -13,9 +20,31 @@ public class SoundManageService extends Service {
 
     private MediaPlayer player;
 
+    private static final String CHANNEL_ID = "sound_manager_service_notification_channel";
+
     @Override
     public void onCreate() {
+
         this.player = new MediaPlayer();
+
+        // ----------------------------------------------------------------------------------------------
+        // 通知チャネルの作成
+        // ----------------------------------------------------------------------------------------------
+        // 通知チャネル名取得（string.xml）
+        String name = getString(R.string.notification_channel_name);
+
+        // 通知チャネルの重要度設定（レベル：標準）
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+        // 通知チャネル生成
+        NotificationChannel channel = new NotificationChannel(this.CHANNEL_ID, name, importance);
+
+        // Notificationオブジェクト取得（引数には取得したいサービスオブジェクトのclassを渡す）
+        NotificationManager manager = getSystemService(NotificationManager.class);
+
+        // 通知チャネル設定（NotificationManagerにNotificationChannelを登録）
+        manager.createNotificationChannel(channel);
+        // ----------------------------------------------------------------------------------------------
     }
 
     @Override
@@ -78,6 +107,7 @@ public class SoundManageService extends Service {
 
         @Override
         public void onPrepared(MediaPlayer mp) {
+            Log.d("TEST", "PlayerPreparedListener実行");
             mp.start();
         }
     }
@@ -89,6 +119,38 @@ public class SoundManageService extends Service {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
+
+            Log.d("TEST", "PlayerCompletionListener実行");
+
+            // ----------------------------------------------------------------------------------------------
+            // 再生処理終了通知
+            // ----------------------------------------------------------------------------------------------
+
+            // Notificationを作成するBuilderクラス生成
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(SoundManageService.this, CHANNEL_ID);
+
+            // ** Builderへの設定 **
+            // 通知エリアの表示アイコン設定
+            builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+            // 通知ドロワーのタイトル設定
+            builder.setContentTitle(getString(R.string.msg_notification_title_finish));
+            // 通知ドロワーのメッセージ設定
+            builder.setContentText(getText(R.string.msg_notification_text_finish));
+
+
+            // BuilderからNotificationオブジェクト生成
+            Notification notification = builder.build();
+
+            // NotificationManagerCompactオブジェクト生成
+            NotificationManagerCompat manager = NotificationManagerCompat.from(SoundManageService.this);
+
+            // 通知実行（Notificationオブジェクトの表示）
+            //---------------------------------------------------------------------------------------------------------
+            // 第一引数：Builderから生成したNotificationオブジェクトを識別する数値（アプリ内で一意の値）
+            // 第二引数：Builderから生成したNotificationオブジェクト
+            //---------------------------------------------------------------------------------------------------------
+            manager.notify(100, notification);
+
             stopSelf();
         }
     }
