@@ -83,6 +83,8 @@ public class SoundManageService extends Service {
     @Override
     public void onDestroy() {
 
+        Log.d("TEST", "onDestroy実行");
+
         // 再生中であれば停止
         if (this.player.isPlaying()) {
             this.player.stop();
@@ -189,6 +191,7 @@ public class SoundManageService extends Service {
             //---------------------------------------------------------------------------------------------------------
             manager.notify(100, notification);
 
+            // サービス内部からサービス自身を終了（onDestroyの呼び出し）
             stopSelf();
         }
     }
