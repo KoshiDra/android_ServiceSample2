@@ -3,6 +3,7 @@ package com.example.servicesample;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -109,6 +110,43 @@ public class SoundManageService extends Service {
         public void onPrepared(MediaPlayer mp) {
             Log.d("TEST", "PlayerPreparedListener実行");
             mp.start();
+
+            // ----------------------------------------------------------------------------------------------
+            // 再生処理開始通知
+            // ----------------------------------------------------------------------------------------------
+
+            // Notificationを作成するBuilderクラス生成
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(SoundManageService.this, CHANNEL_ID);
+
+            // ** Builderへの設定 **
+            // 通知エリアの表示アイコン設定
+            builder.setSmallIcon(android.R.drawable.ic_dialog_info);
+            // 通知ドロワーのタイトル設定
+            builder.setContentTitle(getString(R.string.msg_notification_title_start));
+            // 通知ドロワーのメッセージ設定
+            builder.setContentText(getText(R.string.msg_notification_text_start));
+
+
+            // 起動先Activityクラスを指定したIntentオブジェクト生成
+            Intent intent = new Intent(SoundManageService.this, MainActivity.class);
+
+            // 引継ぎデータを設定
+            intent.putExtra("fromNotification", true);
+
+            // PendingIntent（指定されたタイミングで起動するインテント）オブジェクト生成
+            PendingIntent stopServiceIntent = PendingIntent.getActivity(SoundManageService.this, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+            // PendingIntentをbuilderに設定
+            builder.setContentIntent(stopServiceIntent);
+
+            // タップされた通知メッセージを自動的に消去するように設定
+            builder.setAutoCancel(true);
+
+            // builderからNotificationオブジェクトを生成
+            Notification notification = builder.build();
+
+            // Notificationオブジェクトを元にサービスをフォアグラウンド化
+            startForeground(200, notification);
         }
     }
 
